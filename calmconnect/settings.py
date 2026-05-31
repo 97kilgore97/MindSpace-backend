@@ -51,6 +51,12 @@ AUTH_USER_MODEL = 'users.User'
 WSGI_APPLICATION = 'calmconnect.wsgi.application'
 ASGI_APPLICATION = 'calmconnect.asgi.application'
 
+CSRF_TRUSTED_ORIGINS = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    'http://localhost:3000'
+).split(',')
+
+
 # ── Database ──────────────────────────────────────────────
 # Uses DATABASE_URL in production (set by Render PostgreSQL)
 # Falls back to SQLite for local development
