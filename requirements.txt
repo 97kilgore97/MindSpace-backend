@@ -5,14 +5,15 @@ djangorestframework-simplejwt==5.3.1
 django-cors-headers==4.3.1
 django-environ==0.11.2
 python-dotenv==1.0.0
+dj-database-url==2.1.0        # parses DATABASE_URL from Render PostgreSQL
 
 # ── Django Channels (WebSockets) ─────────────────────────
 channels==4.0.0
 channels-redis==4.1.0
-daphne==4.0.0          # ASGI server
+daphne==4.0.0
 
 # ── Database ─────────────────────────────────────────────
-psycopg2-binary==2.9.9  # PostgreSQL driver (prod)
+psycopg2-binary>=2.9.10       # PostgreSQL driver
 
 # ── Redis ────────────────────────────────────────────────
 redis==5.0.1
@@ -20,10 +21,10 @@ redis==5.0.1
 # ── Africa's Talking (SMS / USSD) ────────────────────────
 africastalking==1.2.8
 
-# ── Supabase (optional realtime/storage) ─────────────────
+# ── Supabase ─────────────────────────────────────────────
 supabase==2.3.4
 
 # ── Utilities ────────────────────────────────────────────
-Pillow==10.3.0          # image uploads
-gunicorn==21.2.0        # production WSGI server
-whitenoise==6.6.0       # static files in production
+Pillow>=10.3.0
+gunicorn==21.2.0
+whitenoise==6.6.0

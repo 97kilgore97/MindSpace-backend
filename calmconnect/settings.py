@@ -7,13 +7,13 @@ load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'change-me-in-production')
-DEBUG = os.getenv('DEBUG', 'True') == 'True'
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # ── Apps ──────────────────────────────────────────────────
 INSTALLED_APPS = [
-    'daphne',        # ← correct
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -35,8 +35,9 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',        # must be first
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -51,21 +52,26 @@ WSGI_APPLICATION = 'calmconnect.wsgi.application'
 ASGI_APPLICATION = 'calmconnect.asgi.application'
 
 # ── Database ──────────────────────────────────────────────
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+# Uses DATABASE_URL in production (set by Render PostgreSQL)
+# Falls back to SQLite for local development
+DATABASE_URL = os.getenv('DATABASE_URL')
+
+if DATABASE_URL:
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=DATABASE_URL,
+            conn_max_age=600,
+            ssl_require=True,
+        )
     }
-    # Production: switch to PostgreSQL ↓
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.postgresql',
-    #     'NAME': os.getenv('DB_NAME', 'mindspace'),
-    #     'USER': os.getenv('DB_USER', 'postgres'),
-    #     'PASSWORD': os.getenv('DB_PASSWORD'),
-    #     'HOST': os.getenv('DB_HOST', 'localhost'),
-    #     'PORT': os.getenv('DB_PORT', '5432'),
-    # }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 # ── Django REST Framework ─────────────────────────────────
 REST_FRAMEWORK = {
@@ -89,47 +95,61 @@ REST_FRAMEWORK = {
 
 # ── JWT ───────────────────────────────────────────────────
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
+    'ACCESS_TOKEN_LIFETIME':  timedelta(hours=1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
+    'ROTATE_REFRESH_TOKENS':  True,
     'BLACKLIST_AFTER_ROTATION': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
-# ── CORS ─────────────────────────────────────────────────
+# ── CORS ──────────────────────────────────────────────────
 CORS_ALLOWED_ORIGINS = os.getenv(
     'ALLOWED_ORIGINS',
-    'http://localhost:3000'
+    'http://localhost:3000,http://localhost:3001'
 ).split(',')
 CORS_ALLOW_CREDENTIALS = True
 
-# ── Django Channels (WebSockets) ─────────────────────────
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
-    }
-}
-    # Development fallback (no Redis needed):
-    # 'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+# ── Django Channels (WebSockets) ──────────────────────────
+REDIS_URL = os.getenv('REDIS_URL', '')
 
+if REDIS_URL:
+    CHANNEL_LAYERS = {
+        'default': {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {'hosts': [REDIS_URL]},
+        }
+    }
+else:
+    # Fallback for local dev without Redis
+    CHANNEL_LAYERS = {
+        'default': {'BACKEND': 'channels.layers.InMemoryChannelLayer'}
+    }
 
 # ── Africa's Talking ──────────────────────────────────────
-AT_API_KEY          = os.getenv('AT_API_KEY', '')
-AT_USERNAME         = os.getenv('AT_USERNAME', 'sandbox')
-AT_SENDER_ID        = os.getenv('AT_SENDER_ID', 'MindSpace')
+AT_API_KEY             = os.getenv('AT_API_KEY', '')
+AT_USERNAME            = os.getenv('AT_USERNAME', 'sandbox')
+AT_SENDER_ID           = os.getenv('AT_SENDER_ID', 'MindSpace')
 CRISIS_COUNSELOR_PHONE = os.getenv('CRISIS_COUNSELOR_PHONE', '')
 
 # ── Static & Media ────────────────────────────────────────
 STATIC_URL  = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL   = '/media/'
 MEDIA_ROOT  = BASE_DIR / 'media'
+
+# ── Security (production) ─────────────────────────────────
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT      = True
+    SESSION_COOKIE_SECURE    = True
+    CSRF_COOKIE_SECURE       = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Nairobi'
 USE_I18N = True
-USE_TZ = True
+USE_TZ   = True
 
 TEMPLATES = [{
     'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -150,7 +170,7 @@ LOGGING = {
     'handlers': {'console': {'class': 'logging.StreamHandler', 'formatter': 'verbose'}},
     'root': {'handlers': ['console'], 'level': 'INFO'},
     'loggers': {
-        'django': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
-        'core.safety': {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'django':       {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
+        'core.safety':  {'handlers': ['console'], 'level': 'WARNING', 'propagate': False},
     },
 }
