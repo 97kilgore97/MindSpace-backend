@@ -11,9 +11,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
-    'localhost',
-    '127.0.0.1',
-    'https://mindspace-zlwk.onrender.com'
+    'localhost,127.0.0.1,mindspace-zlwk.onrender.com'
 ).split(',')
 
 # ── Apps ──────────────────────────────────────────────────
