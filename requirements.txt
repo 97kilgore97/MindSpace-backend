@@ -1,0 +1,29 @@
+# ── Django core ───────────────────────────────────────────
+Django==4.2.9
+djangorestframework==3.14.0
+djangorestframework-simplejwt==5.3.1
+django-cors-headers==4.3.1
+django-environ==0.11.2
+python-dotenv==1.0.0
+
+# ── Django Channels (WebSockets) ─────────────────────────
+channels==4.0.0
+channels-redis==4.1.0
+daphne==4.0.0          # ASGI server
+
+# ── Database ─────────────────────────────────────────────
+psycopg2-binary==2.9.9  # PostgreSQL driver (prod)
+
+# ── Redis ────────────────────────────────────────────────
+redis==5.0.1
+
+# ── Africa's Talking (SMS / USSD) ────────────────────────
+africastalking==1.2.8
+
+# ── Supabase (optional realtime/storage) ─────────────────
+supabase==2.3.4
+
+# ── Utilities ────────────────────────────────────────────
+Pillow==10.3.0          # image uploads
+gunicorn==21.2.0        # production WSGI server
+whitenoise==6.6.0       # static files in production
