@@ -11,7 +11,7 @@ DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv(
     'ALLOWED_HOSTS',
-    'localhost,127.0.0.1,mindspace-zlwk.onrender.com'
+    'localhost,127.0.0.1,.onrender.com'
 ).split(',')
 
 # ── Apps ──────────────────────────────────────────────────
@@ -56,9 +56,7 @@ ASGI_APPLICATION = 'calmconnect.asgi.application'
 
 CSRF_TRUSTED_ORIGINS = os.getenv(
     'CSRF_TRUSTED_ORIGINS',
-    'http://localhost:3000',
-    'https://mindspace-zlwk.onrender.com',
-    'https://mindspace-backend-r3pp.onrender.com',
+    'http://localhost:3000,https://mindspace-zlwk.onrender.com'
 ).split(',')
 
 
